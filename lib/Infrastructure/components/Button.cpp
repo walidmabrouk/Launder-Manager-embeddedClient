@@ -8,6 +8,7 @@ void Button::init()
 }
 
 bool Button::isPressed()
+
 {
   bool reading = digitalRead(_pin);
 

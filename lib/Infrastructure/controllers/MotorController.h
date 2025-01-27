@@ -13,15 +13,17 @@ private:
   unsigned long _lastToggleTime;
   static constexpr unsigned long DEBOUNCE_DELAY = 50;
 
+  unsigned long _startTime;   // Temps de démarrage du moteur
+  unsigned long _elapsedTime; // Temps total de fonctionnement
+  int _timer;                 // Timer pour 20 secondes
+
 public:
   MotorController(Motor &motor, ButtonDriver &buttonDriver);
 
-  // Prévenir la copie
-  MotorController(const MotorController &) = delete;
-  MotorController &operator=(const MotorController &) = delete;
-
   void update();
   bool isMotorRunning() const;
+  int getTimer() const;           // Récupérer le temps restant
+  unsigned long getElapsedTime(); // Récupérer le temps écoulé
 };
 
-#endif // MOTOR_CONTROLLER_H
+#endif // MOTORCONTROLLER_H

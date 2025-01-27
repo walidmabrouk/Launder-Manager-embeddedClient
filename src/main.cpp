@@ -33,6 +33,29 @@ void loop()
   {
     lastMotorState = motor.isRunning();
     Serial.println(lastMotorState ? F("Motor ON") : F("Motor OFF"));
+
+    if (!lastMotorState)
+    {
+      // Afficher le temps de fonctionnement lorsque le moteur s'arrête
+      unsigned long elapsedTime = motorController.getElapsedTime();
+      Serial.print(F("Motor ran for: "));
+      Serial.print(elapsedTime);
+      Serial.println(F(" seconds"));
+    }
+  }
+
+  if (motor.isRunning())
+  {
+    // Afficher le timer restant lorsque le moteur fonctionne
+    Serial.print(F("Timer remaining: "));
+    Serial.print(motorController.getTimer());
+    Serial.println(F(" seconds"));
+
+    if (motorController.getTimer() == 0)
+    {
+      Serial.println(F("Timer finished! Stopping motor."));
+      motor.stop();
+    }
   }
 
   delay(BSP::System::TASK_INTERVAL_MS);
