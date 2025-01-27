@@ -1,40 +1,39 @@
-#include <Arduino.h>
-#include "../lib/Infrastructure/WebSocketClient/WebSocketService.hpp"
+#include "../lib/Infrastructure/components/Button.h"
+#include "../lib/Infrastructure/drivers/ButtonDriver.h"
+#include "../lib/Infrastructure/components/Motor.h"
+#include "../lib/Infrastructure/controllers/MotorController.h"
 
-const char *WIFI_SSID = "SABRINEBNAYED 6060";
-const char *WIFI_PASSWORD = "sabrinesabrine";
-const char *WS_HOST = "192.168.137.103";
-const int WS_PORT = 5049;   
-const char *WS_PATH = "/ws"; 
 
-WebSocketService webSocketService;
+
+Button button;
+ButtonDriver buttonDriver(button);
+Motor motor;
+MotorController motorController(motor, buttonDriver);
 
 void setup()
 {
-    Serial.begin(115200);
+  Serial.begin(BSP::Debug::SERIAL_BAUD_RATE);
+  while (!Serial)
+  {
+    ; // Attendre la connexion série
+  }
 
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        Serial.print(".");
-    }
+  button.init();
+  motor.init();
 
-    Serial.println("\nConnecté au WiFi");
-    Serial.print("Adresse IP: ");
-    Serial.println(WiFi.localIP());
-
-    webSocketService.begin(WS_HOST, WS_PORT, WS_PATH);
+  Serial.println(F("System initialized"));
 }
 
 void loop()
 {
-    webSocketService.loop();
+  motorController.update();
 
-    static unsigned long lastSend = 0;
-    if (millis() - lastSend > 5000)
-    {
-        lastSend = millis();
-        webSocketService.sendNotification(30, "Stopped", 5.0);
-    }
+  static bool lastMotorState = false;
+  if (motor.isRunning() != lastMotorState)
+  {
+    lastMotorState = motor.isRunning();
+    Serial.println(lastMotorState ? F("Motor ON") : F("Motor OFF"));
+  }
+
+  delay(BSP::System::TASK_INTERVAL_MS);
 }
