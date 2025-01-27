@@ -2,13 +2,14 @@
 #include "../lib/Infrastructure/drivers/ButtonDriver.h"
 #include "../lib/Infrastructure/components/Motor.h"
 #include "../lib/Infrastructure/controllers/MotorController.h"
+#include "../lib/Infrastructure/components/Display.h"
 
-
-
+// Déclaration des objets
 Button button;
 ButtonDriver buttonDriver(button);
 Motor motor;
 MotorController motorController(motor, buttonDriver);
+Display display;
 
 void setup()
 {
@@ -18,8 +19,11 @@ void setup()
     ; // Attendre la connexion série
   }
 
+  Wire.begin(); // Initialisation I2C pour ESP32 (SDA=21, SCL=22 par défaut)
+
   button.init();
   motor.init();
+  display.init();
 
   Serial.println(F("System initialized"));
 }
@@ -28,6 +32,13 @@ void loop()
 {
   motorController.update();
 
+  // Mise à jour de l'affichage
+  display.updateStatus(
+      motor.isRunning(),
+      motorController.getTimer(),
+      motorController.getElapsedTime());
+
+  // Gestion des changements d'état du moteur
   static bool lastMotorState = false;
   if (motor.isRunning() != lastMotorState)
   {
@@ -36,7 +47,6 @@ void loop()
 
     if (!lastMotorState)
     {
-      // Afficher le temps de fonctionnement lorsque le moteur s'arrête
       unsigned long elapsedTime = motorController.getElapsedTime();
       Serial.print(F("Motor ran for: "));
       Serial.print(elapsedTime);
@@ -44,9 +54,9 @@ void loop()
     }
   }
 
+  // Affichage du timer et arrêt du moteur si nécessaire
   if (motor.isRunning())
   {
-    // Afficher le timer restant lorsque le moteur fonctionne
     Serial.print(F("Timer remaining: "));
     Serial.print(motorController.getTimer());
     Serial.println(F(" seconds"));

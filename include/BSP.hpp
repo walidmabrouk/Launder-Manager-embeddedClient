@@ -24,7 +24,6 @@ namespace BSP
   namespace Machine
   {
     constexpr uint8_t DEFAULT_ID = 2;
-
     namespace IO
     {
       namespace Buttons
@@ -49,7 +48,15 @@ namespace BSP
       }
     }
   }
-
+  namespace Display
+  {
+    constexpr uint8_t SCREEN_WIDTH = 128;  // Largeur de l'écran
+    constexpr uint8_t SCREEN_HEIGHT = 64;  // Hauteur de l'écran
+    constexpr uint8_t I2C_ADDRESS = 0x3C;  // Adresse I2C de l'écran
+    constexpr uint8_t SDA_PIN = 22;        // Pin SDA
+    constexpr uint8_t SCL_PIN = 21;        // Pin SCL
+    constexpr bool INVERT_DISPLAY = false; // Inversion des couleurs
+  }
   // Configuration de débogage
   namespace Debug
   {
