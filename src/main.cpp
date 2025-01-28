@@ -1,10 +1,9 @@
-// main.cpp
 #include "../lib/Infrastructure/components/Button.h"
 #include "../lib/Infrastructure/drivers/ButtonDriver.h"
 #include "../lib/Infrastructure/components/Motor.h"
 #include "../lib/Infrastructure/controllers/MotorController.h"
 #include "../lib/Infrastructure/components/Display.h"
-#include "../lib/Infrastructure/drivers/DriverWiFi.h"
+#include "../lib/Infrastructure/drivers/WiFiDriver.h"
 
 // Déclaration des objets
 Button button;
@@ -13,7 +12,7 @@ Motor motor;
 MotorController motorController(motor, buttonDriver);
 Display display;
 WiFiClient wifiClient;
-DriverWiFi wifiDriver(wifiClient);
+WiFiDriver wifiDriver(wifiClient);
 
 void setupWiFi()
 {
@@ -39,7 +38,7 @@ void checkWiFiStatus()
 
   unsigned long currentMillis = millis();
   if (currentMillis - lastWiFiCheck >= 5000)
-  { // Vérification toutes les 5 secondes
+  {
     lastWiFiCheck = currentMillis;
 
     bool currentWiFiStatus = wifiDriver.isConnected();
@@ -55,7 +54,7 @@ void checkWiFiStatus()
       else
       {
         Serial.println(F("WiFi connection lost"));
-        wifiDriver.connect(); // Tentative de reconnexion
+        wifiDriver.connect();
       }
     }
   }
@@ -88,7 +87,7 @@ void loop()
 
   motorController.update();
 
-  // Mise à jour de l'affichage (sans modification)
+  // Mise à jour de l'affichage
   display.updateStatus(
       motor.isRunning(),
       motorController.getTimer(),

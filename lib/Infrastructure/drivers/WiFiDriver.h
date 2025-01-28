@@ -6,7 +6,7 @@
 #include <WiFi.h>
 #include "../../include/BSP.hpp"
 
-class DriverWiFi
+class WiFiDriver
 {
 private:
     WiFiClient &_wifiClient;
@@ -15,10 +15,10 @@ private:
     bool _isConnected;
 
 public:
-    explicit DriverWiFi(WiFiClient &wifiClient,
+    explicit WiFiDriver(WiFiClient &wifiClient,
                         const Types::NetworkConfig &config = getDefaultNetworkConfig(),
                         unsigned long timeout = BSP::System::WATCHDOG_TIMEOUT_MS);
-    ~DriverWiFi() = default;
+    ~WiFiDriver() = default;
 
     void init();
     bool connect();

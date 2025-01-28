@@ -1,7 +1,7 @@
 // DriverWiFi.cpp
-#include "DriverWiFi.h"
+#include "WiFiDriver.h"
 
-DriverWiFi::DriverWiFi(WiFiClient &wifiClient,
+WiFiDriver::WiFiDriver(WiFiClient &wifiClient,
                        const Types::NetworkConfig &config,
                        unsigned long timeout)
     : _wifiClient(wifiClient), _config(config), _timeout(timeout), _isConnected(false)
@@ -12,7 +12,7 @@ DriverWiFi::DriverWiFi(WiFiClient &wifiClient,
   }
 }
 
-void DriverWiFi::init()
+void WiFiDriver::init()
 {
   WiFi.mode(WIFI_STA);
   disconnect();
@@ -23,7 +23,7 @@ void DriverWiFi::init()
   }
 }
 
-bool DriverWiFi::connect()
+bool WiFiDriver::connect()
 {
   if (BSP::Debug::ENABLE_SERIAL)
   {
@@ -65,7 +65,7 @@ bool DriverWiFi::connect()
   return _isConnected;
 }
 
-void DriverWiFi::disconnect()
+void WiFiDriver::disconnect()
 {
   WiFi.disconnect();
   _isConnected = false;
@@ -76,17 +76,17 @@ void DriverWiFi::disconnect()
   }
 }
 
-bool DriverWiFi::isConnected() const
+bool WiFiDriver::isConnected() const
 {
   return WiFi.status() == WL_CONNECTED;
 }
 
-IPAddress DriverWiFi::getLocalIP() const
+IPAddress WiFiDriver::getLocalIP() const
 {
   return WiFi.localIP();
 }
 
-int32_t DriverWiFi::getRSSI() const
+int32_t WiFiDriver::getRSSI() const
 {
   return WiFi.RSSI();
 }
