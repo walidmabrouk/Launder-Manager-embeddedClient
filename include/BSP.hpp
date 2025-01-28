@@ -9,8 +9,8 @@ namespace BSP
   {
     namespace WiFi
     {
-      constexpr char SSID[] = "SABRINEBNAYED 6060";
-      constexpr char PASSWORD[] = "sabrinesabrine";
+      constexpr char SSID[] = "TOPNET0DBB184";
+      constexpr char PASSWORD[] = "25837933";
     }
 
     namespace WebSocket

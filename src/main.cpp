@@ -1,8 +1,10 @@
+// main.cpp
 #include "../lib/Infrastructure/components/Button.h"
 #include "../lib/Infrastructure/drivers/ButtonDriver.h"
 #include "../lib/Infrastructure/components/Motor.h"
 #include "../lib/Infrastructure/controllers/MotorController.h"
 #include "../lib/Infrastructure/components/Display.h"
+#include "../lib/Infrastructure/drivers/DriverWiFi.h"
 
 // Déclaration des objets
 Button button;
@@ -10,6 +12,54 @@ ButtonDriver buttonDriver(button);
 Motor motor;
 MotorController motorController(motor, buttonDriver);
 Display display;
+WiFiClient wifiClient;
+DriverWiFi wifiDriver(wifiClient);
+
+void setupWiFi()
+{
+  wifiDriver.init();
+  if (wifiDriver.connect())
+  {
+    Serial.println(F("WiFi connected successfully"));
+    Serial.print(F("IP address: "));
+    Serial.println(wifiDriver.getLocalIP());
+    Serial.print(F("Signal strength (RSSI): "));
+    Serial.println(wifiDriver.getRSSI());
+  }
+  else
+  {
+    Serial.println(F("WiFi connection failed"));
+  }
+}
+
+void checkWiFiStatus()
+{
+  static unsigned long lastWiFiCheck = 0;
+  static bool lastWiFiStatus = false;
+
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastWiFiCheck >= 5000)
+  { // Vérification toutes les 5 secondes
+    lastWiFiCheck = currentMillis;
+
+    bool currentWiFiStatus = wifiDriver.isConnected();
+    if (currentWiFiStatus != lastWiFiStatus)
+    {
+      lastWiFiStatus = currentWiFiStatus;
+      if (currentWiFiStatus)
+      {
+        Serial.println(F("WiFi reconnected"));
+        Serial.print(F("IP: "));
+        Serial.println(wifiDriver.getLocalIP());
+      }
+      else
+      {
+        Serial.println(F("WiFi connection lost"));
+        wifiDriver.connect(); // Tentative de reconnexion
+      }
+    }
+  }
+}
 
 void setup()
 {
@@ -25,14 +75,20 @@ void setup()
   motor.init();
   display.init();
 
+  // Configuration et connexion WiFi
+  setupWiFi();
+
   Serial.println(F("System initialized"));
 }
 
 void loop()
 {
+  // Vérification périodique du WiFi
+  checkWiFiStatus();
+
   motorController.update();
 
-  // Mise à jour de l'affichage
+  // Mise à jour de l'affichage (sans modification)
   display.updateStatus(
       motor.isRunning(),
       motorController.getTimer(),
