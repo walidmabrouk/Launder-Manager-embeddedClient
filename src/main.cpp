@@ -4,6 +4,7 @@
 #include "../lib/Infrastructure/controllers/MotorController.h"
 #include "../lib/Infrastructure/components/Display.h"
 #include "../lib/Infrastructure/drivers/WiFiDriver.h"
+#include "../lib/Infrastructure/services/WebSocketService.h"
 
 // Déclaration des objets
 Button button;
@@ -13,6 +14,10 @@ MotorController motorController(motor, buttonDriver);
 Display display;
 WiFiClient wifiClient;
 WiFiDriver wifiDriver(wifiClient);
+WebSocketService webSocketService;
+
+// État précédent du moteur pour détecter les changements
+static bool lastMotorState = false;
 
 void setupWiFi()
 {
@@ -24,6 +29,12 @@ void setupWiFi()
     Serial.println(wifiDriver.getLocalIP());
     Serial.print(F("Signal strength (RSSI): "));
     Serial.println(wifiDriver.getRSSI());
+
+    // Initialiser WebSocket une fois le WiFi connecté
+    webSocketService.begin(
+        BSP::Network::WebSocket::HOST,
+        BSP::Network::WebSocket::PORT,
+        BSP::Network::WebSocket::PATH);
   }
   else
   {
@@ -50,12 +61,43 @@ void checkWiFiStatus()
         Serial.println(F("WiFi reconnected"));
         Serial.print(F("IP: "));
         Serial.println(wifiDriver.getLocalIP());
+
+        // Réinitialiser WebSocket après reconnexion WiFi
+        webSocketService.begin(
+            BSP::Network::WebSocket::HOST,
+            BSP::Network::WebSocket::PORT,
+            BSP::Network::WebSocket::PATH);
       }
       else
       {
         Serial.println(F("WiFi connection lost"));
         wifiDriver.connect();
       }
+    }
+  }
+}
+
+void handleMotorStateChange()
+{
+  bool currentMotorState = motor.isRunning();
+  if (currentMotorState != lastMotorState)
+  {
+    lastMotorState = currentMotorState;
+    Serial.println(currentMotorState ? F("Motor ON") : F("Motor OFF"));
+
+    // Envoyer notification WebSocket du changement d'état
+    webSocketService.sendNotification(
+        BSP::Machine::DEFAULT_ID,
+        currentMotorState ? "ON" : "OFF",
+        0.0 // Prix à ajuster selon vos besoins
+    );
+
+    if (!currentMotorState)
+    {
+      unsigned long elapsedTime = motorController.getElapsedTime();
+      Serial.print(F("Motor ran for: "));
+      Serial.print(elapsedTime);
+      Serial.println(F(" seconds"));
     }
   }
 }
@@ -68,13 +110,13 @@ void setup()
     ; // Attendre la connexion série
   }
 
-  Wire.begin(); // Initialisation I2C pour ESP32 (SDA=21, SCL=22 par défaut)
+  Wire.begin(); // Initialisation I2C pour ESP32
 
   button.init();
   motor.init();
   display.init();
 
-  // Configuration et connexion WiFi
+  // Configuration et connexion WiFi + WebSocket
   setupWiFi();
 
   Serial.println(F("System initialized"));
@@ -85,6 +127,10 @@ void loop()
   // Vérification périodique du WiFi
   checkWiFiStatus();
 
+  // Mise à jour WebSocket
+  webSocketService.loop();
+
+  // Mise à jour du contrôleur moteur
   motorController.update();
 
   // Mise à jour de l'affichage
@@ -93,23 +139,10 @@ void loop()
       motorController.getTimer(),
       motorController.getElapsedTime());
 
-  // Gestion des changements d'état du moteur
-  static bool lastMotorState = false;
-  if (motor.isRunning() != lastMotorState)
-  {
-    lastMotorState = motor.isRunning();
-    Serial.println(lastMotorState ? F("Motor ON") : F("Motor OFF"));
+  // Gestion des changements d'état du moteur et notifications WebSocket
+  handleMotorStateChange();
 
-    if (!lastMotorState)
-    {
-      unsigned long elapsedTime = motorController.getElapsedTime();
-      Serial.print(F("Motor ran for: "));
-      Serial.print(elapsedTime);
-      Serial.println(F(" seconds"));
-    }
-  }
-
-  // Affichage du timer et arrêt du moteur si nécessaire
+  // Gestion du timer et arrêt du moteur si nécessaire
   if (motor.isRunning())
   {
     Serial.print(F("Timer remaining: "));
@@ -120,6 +153,12 @@ void loop()
     {
       Serial.println(F("Timer finished! Stopping motor."));
       motor.stop();
+      // Notification WebSocket de l'arrêt automatique
+      webSocketService.sendNotification(
+          BSP::Machine::DEFAULT_ID,
+          "Stopped",
+          5.0 // Prix à ajuster selon vos besoins
+      );
     }
   }
 

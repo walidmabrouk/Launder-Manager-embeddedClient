@@ -15,7 +15,7 @@ namespace BSP
 
     namespace WebSocket
     {
-      constexpr char HOST[] = "192.168.137.103";
+      constexpr char HOST[] = "192.168.1.8";
       constexpr uint16_t PORT = 5049;
       constexpr char PATH[] = "/ws";
     }
